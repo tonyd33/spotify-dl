@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import argparse
 import json
 import os
@@ -13,7 +14,7 @@ from spotify_dl.constants import VERSION
 from spotify_dl.models import db, Song
 from spotify_dl.scaffold import log, check_for_tokens
 from spotify_dl.spotify import fetch_tracks, parse_spotify_url, validate_spotify_url, get_item_name
-from spotify_dl.youtube import download_songs
+from spotify_dl.youtube import download_songs, fetch_tracks_yt, validate_youtube_url
 
 
 def spotify_dl():
@@ -71,10 +72,15 @@ def spotify_dl():
 
     if args.url:
         valid_item = validate_spotify_url(args.url)
+        valid_yt = validate_youtube_url(args.url)
 
-    if not valid_item:
-        sys.exit(1)
+    if valid_item:
+        download_spotify(sp, args)
+    if valid_yt:
+        download_youtube(sp, args)
+    exit(1)
 
+def download_spotify(sp, args):
     if args.output:
         item_type, item_id = parse_spotify_url(args.url)
         directory_name = get_item_name(sp, item_type, item_id)
@@ -82,10 +88,20 @@ def spotify_dl():
         save_path.mkdir(parents=True, exist_ok=True)
         log.info("Saving songs to: {}".format(directory_name))
 
+
     songs = fetch_tracks(sp, item_type, args.url)
     if args.download is True:
         download_songs(songs, save_path, args.format_str, args.skip_mp3, args.keep_playlist_order)
 
+def download_youtube(sp, args):
+    if args.output:
+        directory_name, item_type, songs = fetch_tracks_yt(args.url)
+        save_path = Path(PurePath.joinpath(Path(args.output), Path(directory_name)))
+        save_path.mkdir(parents=True, exist_ok=True)
+        log.info("Saving songs to: {}".format(directory_name))
+
+    if args.download is True:
+        download_songs(songs, save_path, args.format_str, args.skip_mp3, args.keep_playlist_order, is_yt=True)
 
 if __name__ == '__main__':
     spotify_dl()

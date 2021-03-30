@@ -10,7 +10,50 @@ from spotify_dl.scaffold import log
 from spotify_dl.utils import sanitize
 
 
-def download_songs(songs, download_directory, format_string, skip_mp3, keep_playlist_order=False):
+def validate_youtube_url(url):
+    return True
+
+def fetch_tracks_yt(url):
+    songs_list = []
+    ytdl_opts = {
+        'skipdownload': True
+    }
+    ytdl = youtube_dl.YoutubeDL(ytdl_opts)
+    ytdl_info = ytdl.extract_info(url, download=False)
+    if ytdl_info.get('_type') == 'playlist':
+        items = ytdl_info['entries']
+        for i in range(len(items)):
+            item = items[i]
+            track_name = item.get('track', 'track')
+            track_artist = item.get('artist', 'artist')
+            track_album = item.get('album', 'album')
+            track_year = item.get('release_year', '0000')
+            album_total = 0
+            track_num = 0
+            cover = item['thumbnails'][len(item['thumbnails']) - 1]['url']
+            genre = ""
+            yt_id = item['id']
+            songs_list.append({"name": track_name, "artist": track_artist, "album": track_album, "year": track_year,
+                               "num_tracks": album_total, "num": track_num, "playlist_num": i + 1,
+                               "cover": cover, "genre": genre, 'yt_id': yt_id})
+        return f"{ytdl_info.get('uploader')} - {ytdl_info.get('title')}", 'playlist', songs_list
+    else:
+        track_name = ytdl_info.get('track', 'track')
+        track_artist = ytdl_info.get('artist', 'artist')
+        track_album = ytdl_info.get('album', 'album')
+        track_year = ytdl_info.get('release_year', '0000')
+        album_total = 0
+        track_num = 0
+        cover = ytdl_info['thumbnails'][len(ytdl_info['thumbnails']) - 1]['url']
+        genre = ""
+        yt_id = ytdl_info['id']
+        songs_list.append({"name": track_name, "artist": track_artist, "album": track_album, "year": track_year,
+                           "num_tracks": album_total, "num": track_num, "playlist_num": 0,
+                           "cover": cover, "genre": genre, 'yt_id': yt_id})
+        return 'Tracks', 'track', songs_list
+
+
+def download_songs(songs, download_directory, format_string, skip_mp3, keep_playlist_order=False, is_yt=False):
     """
     Downloads songs from the YouTube URL passed to either current directory or download_directory, is it is passed.
     :param songs: Dictionary of songs and associated artist
@@ -22,6 +65,8 @@ def download_songs(songs, download_directory, format_string, skip_mp3, keep_play
     log.debug(f"Downloading to {download_directory}")
     for song in songs:
         query = f"{song.get('artist')} - {song.get('name')} Lyrics".replace(":", "").replace("\"", "")
+        if is_yt:
+            query = song.get('yt_id')
         download_archive = path.join(download_directory, 'downloaded_songs.txt')
 
         file_name = sanitize(f"{song.get('artist')} - {song.get('name')}", '#')  # youtube-dl automatically replaces with #
