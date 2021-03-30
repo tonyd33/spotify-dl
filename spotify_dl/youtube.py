@@ -1,5 +1,6 @@
 import urllib.request
 from os import path
+import re
 
 import youtube_dl
 from mutagen.easyid3 import EasyID3
@@ -24,8 +25,19 @@ def fetch_tracks_yt(url):
         items = ytdl_info['entries']
         for i in range(len(items)):
             item = items[i]
-            track_name = item.get('track', 'track')
-            track_artist = item.get('artist', 'artist')
+            if 'track' in item and 'artist' in item:
+                track_name = item.get('track', item.get('title'))
+                track_artist = item.get('artist', item.get('title'))
+            else:
+                title = item.get('title')
+                regex = r'([^-\|\/]*)\s+[-\|\/]*\s+([^-\|\/]*)'
+                m = re.search(regex, title)
+                if m is not None:
+                    track_artist = m.group(1)
+                    track_name = m.group(2)
+                else:
+                    track_artist = title
+                    track_name = title
             track_album = item.get('album', 'album')
             track_year = item.get('release_year', '0000')
             album_total = 0
@@ -104,7 +116,7 @@ def download_songs(songs, download_directory, format_string, skip_mp3, keep_play
 
         if not skip_mp3:
             song_file = MP3(path.join(f"{file_path}.mp3"), ID3=EasyID3)
-            song_file['date'] = song.get('year')
+            song_file['date'] = str(song.get('year', '0000'))
             if keep_playlist_order:
                 song_file['tracknumber'] = str(song.get('playlist_num'))
             else:
