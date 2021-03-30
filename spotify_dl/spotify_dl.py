@@ -72,13 +72,14 @@ def spotify_dl():
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials())
     log.debug('Arguments: {}'.format(args))
 
+    # TODO: make the logic less dumb
     if args.url:
         valid_item = validate_spotify_url(args.url)
         valid_yt = validate_youtube_url(args.url)
 
     if valid_item:
         download_spotify(sp, args)
-    if valid_yt:
+    elif valid_yt:
         download_youtube(sp, args)
     exit(1)
 

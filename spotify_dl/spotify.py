@@ -50,6 +50,7 @@ def fetch_tracks(sp, item_type, url):
                                        "num_tracks": album_total, "num": track_num, "playlist_num": offset + 1,
                                        "cover": cover, "genre": genre})
                     offset += 1
+                # TODO: fix for local files
                 except AttributeError as e:
                     print(e, f' skipping {track_name}')
                     continue

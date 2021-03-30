@@ -6,12 +6,14 @@ import youtube_dl
 from mutagen.easyid3 import EasyID3
 from mutagen.id3 import APIC, ID3
 from mutagen.mp3 import MP3
+from mutagen import MutagenError
 
 from spotify_dl.scaffold import log
 from spotify_dl.utils import sanitize
 
 
 def validate_youtube_url(url):
+    # TODO: actually validate it
     return True
 
 def fetch_tracks_yt(url):
@@ -133,5 +135,10 @@ def download_songs(songs, download_directory, format_string, skip_mp3, keep_play
                         data=urllib.request.urlopen(song.get('cover')).read()
                     )
                 song_file.save()
+            # TODO: error handling
             except FileNotFoundError as e:
                 print(e, f' skipping {query}')
+                continue
+            except MutagenError as e:
+                print(e, f' skipping {query}')
+                continue
