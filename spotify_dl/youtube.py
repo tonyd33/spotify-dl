@@ -115,20 +115,23 @@ def download_songs(songs, download_directory, format_string, skip_mp3, keep_play
                 continue
 
         if not skip_mp3:
-            song_file = MP3(path.join(f"{file_path}.mp3"), ID3=EasyID3)
-            song_file['date'] = str(song.get('year', '0000'))
-            if keep_playlist_order:
-                song_file['tracknumber'] = str(song.get('playlist_num'))
-            else:
-                song_file['tracknumber'] = str(song.get('num')) + '/' + str(song.get('num_tracks'))
-            song_file['genre'] = song.get('genre')
-            song_file.save()
-            song_file = MP3(f"{file_path}.mp3", ID3=ID3)
-            if song.get('cover') is not None:
-                song_file.tags['APIC'] = APIC(
-                    encoding=3,
-                    mime='image/jpeg',
-                    type=3, desc=u'Cover',
-                    data=urllib.request.urlopen(song.get('cover')).read()
-                )
-            song_file.save()
+            try:
+                song_file = MP3(path.join(f"{file_path}.mp3"), ID3=EasyID3)
+                song_file['date'] = str(song.get('year', '0000'))
+                if keep_playlist_order:
+                    song_file['tracknumber'] = str(song.get('playlist_num'))
+                else:
+                    song_file['tracknumber'] = str(song.get('num')) + '/' + str(song.get('num_tracks'))
+                song_file['genre'] = song.get('genre')
+                song_file.save()
+                song_file = MP3(f"{file_path}.mp3", ID3=ID3)
+                if song.get('cover') is not None:
+                    song_file.tags['APIC'] = APIC(
+                        encoding=3,
+                        mime='image/jpeg',
+                        type=3, desc=u'Cover',
+                        data=urllib.request.urlopen(song.get('cover')).read()
+                    )
+                song_file.save()
+            except FileNotFoundError as e:
+                print(e, f' skipping {query}')

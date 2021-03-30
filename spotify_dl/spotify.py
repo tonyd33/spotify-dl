@@ -26,25 +26,36 @@ def fetch_tracks(sp, item_type, url):
                                       additional_types=['track'], offset=offset)
             total_songs = items.get('total')
             for item in items['items']:
-                track_name = item['track']['name']
-                track_artist = ", ".join([artist['name'] for artist in item['track']['artists']])
-                track_album = item['track']['album']['name']
-                track_year = item['track']['album']['release_date'][:4]
-                album_total = item['track']['album']['total_tracks']
-                track_num = item['track']['track_number']
-                if len(item['track']['album']['images']) > 0:
-                    cover = item['track']['album']['images'][0]['url']
-                else:
-                    cover = None
-            
-                if len(sp.artist(artist_id=item['track']['artists'][0]['uri'])['genres']) > 0:
-                    genre = sp.artist(artist_id=item['track']['artists'][0]['uri'])['genres'][0]
-                else:
-                    genre = ""
-                songs_list.append({"name": track_name, "artist": track_artist, "album": track_album, "year": track_year,
-                                   "num_tracks": album_total, "num": track_num, "playlist_num": offset + 1,
-                                   "cover": cover, "genre": genre})
-                offset += 1
+                try:
+                    track_name = item['track']['name']
+                    track_artist = ", ".join([artist['name'] for artist in item['track']['artists']])
+                    track_album = item['track']['album']['name']
+                    track_year = item['track']['album']['release_date']
+                    if track_year is not None:
+                        track_year = item['track']['album']['release_date'][:4]
+                    else:
+                        track_year = 0000
+                    album_total = item['track']['album'].get('total_tracks', 0)
+                    track_num = item['track']['track_number']
+                    if len(item['track']['album']['images']) > 0:
+                        cover = item['track']['album']['images'][0]['url']
+                    else:
+                        cover = None
+
+                    if len(sp.artist(artist_id=item['track']['artists'][0]['uri'])['genres']) > 0:
+                        genre = sp.artist(artist_id=item['track']['artists'][0]['uri'])['genres'][0]
+                    else:
+                        genre = ""
+                    songs_list.append({"name": track_name, "artist": track_artist, "album": track_album, "year": track_year,
+                                       "num_tracks": album_total, "num": track_num, "playlist_num": offset + 1,
+                                       "cover": cover, "genre": genre})
+                    offset += 1
+                except AttributeError as e:
+                    print(e, f' skipping {track_name}')
+                    continue
+                except KeyError as e:
+                    print(e, f' skipping {track_name}')
+                    continue
 
             log.info(f"Fetched {offset}/{total_songs} songs in the playlist")
             if total_songs == offset:

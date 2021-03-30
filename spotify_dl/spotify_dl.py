@@ -40,6 +40,8 @@ def spotify_dl():
                         help='Show more information on what''s happening.')
     parser.add_argument('-v', '--version', action='store_true',
                         help='Shows current version of the program')
+    parser.add_argument('-c', '--createdir', action='store_true',
+                        help='Create a subdirectory')
     args = parser.parse_args()
 
     if args.version:
@@ -84,7 +86,9 @@ def download_spotify(sp, args):
     if args.output:
         item_type, item_id = parse_spotify_url(args.url)
         directory_name = get_item_name(sp, item_type, item_id)
-        save_path = Path(PurePath.joinpath(Path(args.output), Path(directory_name)))
+        save_path = Path(args.output)
+        if args.createdir:
+            save_path = Path(PurePath.joinpath(Path(args.output), Path(directory_name)))
         save_path.mkdir(parents=True, exist_ok=True)
         log.info("Saving songs to: {}".format(directory_name))
 
@@ -96,7 +100,9 @@ def download_spotify(sp, args):
 def download_youtube(sp, args):
     if args.output:
         directory_name, item_type, songs = fetch_tracks_yt(args.url)
-        save_path = Path(PurePath.joinpath(Path(args.output), Path(directory_name)))
+        save_path = Path(args.output)
+        if args.createdir:
+            save_path = Path(PurePath.joinpath(Path(args.output), Path(directory_name)))
         save_path.mkdir(parents=True, exist_ok=True)
         log.info("Saving songs to: {}".format(directory_name))
 
